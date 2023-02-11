@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 async function main() {
   const [owner, admin1] = await ethers.getSigners();
   const admin = [owner.address, admin1.address, "0xE6e2595f5f910c8A6c4cf42267Ca350c6BA8c054"];
+  // console.log(owner.address, admin1.address);
 
   // const CloneMultiSig = await ethers.getContractFactory("cloneMultiSig");
   // const cloneMultiSig = await CloneMultiSig.deploy();
