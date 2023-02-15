@@ -7,9 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 //user get 20% APY CVIII as reward;
 // tken ratio 1: 1
 
-contract stakERC20 is Ownable {
-    IERC20 rewardToken;
-    IERC20 stakeToken;
+contract StakERC20 is Ownable {
+    IERC20 public rewardToken;
+    IERC20 public stakeToken;
 
     uint256 constant SECONDS_PER_YEAR = 31536000;
 
@@ -41,13 +41,18 @@ contract stakERC20 is Ownable {
     }
 
     function stake(uint256 amount) external {
-        require(
-            stakeToken.transferFrom(msg.sender, address(this), amount),
-            "transferFailed"
-        );
         User storage _user = user[msg.sender];
-        _user.stakedAmount += amount;
-        _user.startTime = block.timestamp;
+        uint256 _amount = _user.stakedAmount;
+
+        stakeToken.transferFrom(msg.sender, address(this), amount);
+
+        if (_amount == 0) {
+            _user.stakedAmount = amount;
+            _user.startTime = block.timestamp;
+        } else {
+            updateReward();
+            _user.stakedAmount += amount;
+        }
     }
 
     function calcReward() public view returns (uint256 _reward) {
@@ -60,15 +65,41 @@ contract stakERC20 is Ownable {
         _reward = (duration * 20 * _amount) / (SECONDS_PER_YEAR * 100);
     }
 
-    function claimReward(uint256 amount) external {
+    function claimReward(uint256 amount) public {
         User storage _user = user[msg.sender];
-        uint256 _reward = calcReward();
-        _user.rewardAccrued += _reward;
-        _user.startTime = block.timestamp;
+        updateReward();
         uint256 _claimableReward = _user.rewardAccrued;
         require(_claimableReward >= amount, "insufficient funds");
         _user.rewardAccrued -= amount;
         if (amount > rewardToken.balanceOf(address(this))) revert tryAgain();
         rewardToken.transfer(msg.sender, amount);
+    }
+
+    function updateReward() public {
+        User storage _user = user[msg.sender];
+        uint256 _reward = calcReward();
+        _user.rewardAccrued += _reward;
+        _user.startTime = block.timestamp;
+    }
+
+    function withdraw(uint256 amount) public {
+        User storage _user = user[msg.sender];
+        uint256 staked = _user.stakedAmount;
+        require(staked >= amount, "insufficient fund");
+        updateReward();
+        _user.stakedAmount -= amount;
+        stakeToken.transfer(msg.sender, amount);
+    }
+
+    function closeAccount() external {
+        User storage _user = user[msg.sender];
+        uint256 staked = _user.stakedAmount;
+        withdraw(staked);
+        uint256 reward = _user.rewardAccrued;
+        claimReward(reward);
+    }
+
+    function userInfo(address _user) external view returns (User memory) {
+        return user[_user];
     }
 }
