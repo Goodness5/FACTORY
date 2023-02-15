@@ -103,3 +103,4 @@ contract StakERC20 is Ownable {
         return user[_user];
     }
 }
+
