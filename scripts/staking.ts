@@ -3,6 +3,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 async function main() {
   const [owner, holder1, holder2, holder3] = await ethers.getSigners();
+  //deploy reward token
   const Token = await ethers.getContractFactory("CVIII");
   const token = await Token.deploy("web3Bridge", "VIII");
   await token.deployed();
@@ -38,12 +39,19 @@ async function main() {
   const userInfo1 = await staking.userInfo(holder1.address);
   console.log(`holder1 infornation ${userInfo1}`);
 
-  await ethers.provider.send("evm_mine", [1676505599]);
+  await ethers.provider.send("evm_mine", [1708037999]);
 
   await staking.connect(holder1).updateReward();
 
   const userInfo = await staking.userInfo(holder1.address);
   console.log(`holder1 infornation ${userInfo}`);
+
+  await token.transfer(staking.address, 100000000);
+
+  await staking.connect(holder1).claimReward(10000000);
+
+  const userInfoAfter = await staking.userInfo(holder1.address);
+  console.log(`holder1 infornation ${userInfoAfter}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -52,3 +60,9 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+//18 772 231
+
+// 18 772 216
+
+//  10 005 054
