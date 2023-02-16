@@ -82,7 +82,7 @@ contract StakERC20 is Ownable {
         _user.startTime = block.timestamp;
     }
 
-    function withdraw(uint256 amount) public {
+    function withdrawStaked(uint256 amount) public {
         User storage _user = user[msg.sender];
         uint256 staked = _user.stakedAmount;
         require(staked >= amount, "insufficient fund");
@@ -94,7 +94,7 @@ contract StakERC20 is Ownable {
     function closeAccount() external {
         User storage _user = user[msg.sender];
         uint256 staked = _user.stakedAmount;
-        withdraw(staked);
+        withdrawStaked(staked);
         uint256 reward = _user.rewardAccrued;
         claimReward(reward);
     }
@@ -103,4 +103,3 @@ contract StakERC20 is Ownable {
         return user[_user];
     }
 }
-
